@@ -32,10 +32,15 @@ class SensorValue {
 /// over time. These variations are due to the blood flow in the arteries
 /// present below the skin of the fingertips.
 class HeartBPMDialog extends StatefulWidget {
-  /// Callback used to notify the caller of updated data sample
+  /// Callback used to notify the caller of updated BPM measurement
   ///
   /// Should be non-blocking as it can affect
-  final void Function(SensorValue) onData;
+  final void Function(int) onBPM;
+
+  /// Callback used to notify the caller of updated raw data sample
+  ///
+  /// Should be non-blocking as it can affect
+  final void Function(SensorValue) onRawData;
 
   /// Camera sampling rate in milliseconds
   final int sampleDelay;
@@ -74,9 +79,10 @@ class HeartBPMDialog extends StatefulWidget {
   HeartBPMDialog({
     Key key,
     @required this.context,
-    this.sampleDelay = 1000 ~/ 30,
-    @required this.onData,
-    this.alpha = 0.6,
+    this.sampleDelay = 2000 ~/ 30,
+    @required this.onBPM,
+    this.onRawData,
+    this.alpha = 0.8,
     this.child,
   });
 
@@ -109,7 +115,7 @@ class _HeartBPPView extends State<HeartBPMDialog> {
   bool _processing = false;
 
   /// Current value
-  double currentValue = 0;
+  int currentValue = 0;
 
   /// to ensure camara was initialized
   bool isCameraInitialized = false;
@@ -157,7 +163,10 @@ class _HeartBPPView extends State<HeartBPMDialog> {
 
       // 5. register image streaming callback
       _controller.startImageStream((image) {
-        if (!_processing && mounted) _scanImage(image);
+        if (!_processing && mounted) {
+          _processing = true;
+          _scanImage(image);
+        }
       });
 
       setState(() {
@@ -169,74 +178,43 @@ class _HeartBPPView extends State<HeartBPMDialog> {
     }
   }
 
-  static const int windowLength = 150;
-  static List<SensorValue> measureWindow = List<SensorValue>.filled(
-      windowLength, SensorValue(time: DateTime.now(), value: 0),
-      growable: true);
-  List<SensorValue> differenceWindow = List<SensorValue>.filled(
+  static const int windowLength = 50;
+  final List<SensorValue> measureWindow = List<SensorValue>.filled(
       windowLength, SensorValue(time: DateTime.now(), value: 0),
       growable: true);
 
   void _scanImage(CameraImage image) async {
     // make system busy
-    setState(() {
-      _processing = true;
-    });
+    // setState(() {
+    //   _processing = true;
+    // });
 
     // get the average value of the image
     double _avg =
         image.planes.first.bytes.reduce((value, element) => value + element) /
             image.planes.first.bytes.length;
 
-    setState(() {
-      measureWindow.removeAt(0);
-      measureWindow.add(SensorValue(time: DateTime.now(), value: _avg));
-    });
+    measureWindow.removeAt(0);
+    measureWindow.add(SensorValue(time: DateTime.now(), value: _avg));
 
-    const List<int> walshKernel = [-1, 1, 1, -1];
-    const int kernelLength = 4;
-    const int kernelLength2 = kernelLength >> 1;
+    _smoothBPM(_avg).then((value) {
+      widget.onRawData(
+        // call the provided function with the new data sample
+        SensorValue(
+          time: DateTime.now(),
+          value: _avg,
+        ),
+      );
 
-    for (int i = 0; i < windowLength; i++) {
-      double convolutionValue = 0;
-      for (int j = 0; j <= kernelLength2; j++) {
-        if ((i - j) >= 0) {
-          // print('i - j = $i - $j = ${i - j}');
-          convolutionValue += measureWindow[i - j].value * walshKernel[j];
-        }
-        if ((j + i) < windowLength &&
-            (i + j != i - j) &&
-            (j + kernelLength2) < kernelLength) {
-          // print('i + j = $i + $j = ${i + j}');
-          convolutionValue +=
-              measureWindow[i + j].value * walshKernel[j + kernelLength2];
-        }
-      }
-      differenceWindow[i] =
-          SensorValue(time: measureWindow[i].time, value: convolutionValue);
-    }
-
-    setState(() {
-      currentValue = _smoothBPM(_avg);
-    });
-
-    // call the provided function with the new data sample
-    widget.onData(SensorValue(
-      time: DateTime.now(),
-      value: currentValue,
-    ));
-
-    Future<void>.delayed(Duration(milliseconds: widget.sampleDelay))
-        .then((onValue) {
-      if (mounted)
-        setState(() {
-          _processing = false;
-        });
+      Future<void>.delayed(Duration(milliseconds: widget.sampleDelay))
+          .then((onValue) {
+        if (mounted)
+          setState(() {
+            _processing = false;
+          });
+      });
     });
   }
-
-  /// Smoothing factor for exponential averaging
-  double _alpha = 0.8;
 
   /// variable to store previous sample value
   double _pastBPM = 0;
@@ -247,36 +225,61 @@ class _HeartBPPView extends State<HeartBPMDialog> {
   /// ```
   /// $y_n = alpha * x_n + (1 - alpha) * y_{n-1}$
   /// ```
-  double _smoothBPM(double newValue) {
-    double newOut = _alpha * newValue + (1 - _alpha) * _pastBPM;
-    _pastBPM = newOut;
-    return newOut;
+  Future<int> _smoothBPM(double newValue) async {
+    double maxVal = 0, _avg = 0;
+
+    measureWindow.forEach((element) {
+      _avg += element.value / measureWindow.length;
+      if (element.value > maxVal) maxVal = element.value;
+    });
+
+    double _threshold = (maxVal + _avg) / 2;
+    int _counter = 0, previousTimestamp = 0;
+    double _tempBPM = 0;
+    for (int i = 1; i < measureWindow.length; i++) {
+      // find rising edge
+      if (measureWindow[i - 1].value < _threshold &&
+          measureWindow[i].value > _threshold) {
+        if (previousTimestamp != 0) {
+          _counter++;
+          _tempBPM += 60000 /
+              (measureWindow[i].time.millisecondsSinceEpoch -
+                  previousTimestamp); // convert to per minute
+        }
+        previousTimestamp = measureWindow[i].time.millisecondsSinceEpoch;
+      }
+    }
+
+    if (_counter > 0) {
+      _tempBPM /= _counter;
+      _tempBPM = (1 - widget.alpha) * currentValue + widget.alpha * _tempBPM;
+      setState(() {
+        currentValue = _tempBPM.toInt();
+        // _bpm = _tempBPM;
+      });
+      widget.onBPM(currentValue);
+    }
+
+    // double newOut = widget.alpha * newValue + (1 - widget.alpha) * _pastBPM;
+    // _pastBPM = newOut;
+    return currentValue;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Container(
-        constraints: BoxConstraints.tightFor(height: 300),
-        child: isCameraInitialized
-            ? Column(
-                children: [
-                  Container(
-                    constraints:
-                        BoxConstraints.tightFor(width: 100, height: 150),
-                    child: CameraPreview(_controller),
-                  ),
-                  Text(currentValue.toStringAsFixed(0)),
-                  // widget.child == null ? SizedBox() : widget.child
-                  Container(
-                    constraints: BoxConstraints.tight(Size(250, 75)),
-                    child: BPMChart(measureWindow),
-                  ),
-                ],
-              )
-            : CircularProgressIndicator(),
-      ),
+    return Container(
+      child: isCameraInitialized
+          ? Column(
+              children: [
+                Container(
+                  constraints: BoxConstraints.tightFor(width: 100, height: 130),
+                  child: _controller.buildPreview(),
+                ),
+                Text(currentValue.toStringAsFixed(0)),
+                widget.child == null ? SizedBox() : widget.child,
+              ],
+            )
+          : Center(child: CircularProgressIndicator()),
     );
   }
 }
