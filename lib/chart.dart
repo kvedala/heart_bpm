@@ -41,33 +41,41 @@ class BPMChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     num min = _data[0]
-                .data
-                .reduce((value, element) =>
-                    (value.value < element.value) ? value : element)
-                .value -
-            10,
+            .data
+            .reduce((value, element) =>
+                (value.value < element.value) ? value : element)
+            .value,
         max = _data[0]
-                .data
-                .reduce((value, element) =>
-                    (value.value > element.value) ? value : element)
-                .value +
-            10;
+            .data
+            .reduce((value, element) =>
+                (value.value > element.value) ? value : element)
+            .value;
 
     return charts.TimeSeriesChart(
       _data,
       primaryMeasureAxis: charts.NumericAxisSpec(
+        showAxisLine: false,
+        renderSpec: charts.NoneRenderSpec(),
         viewport: charts.NumericExtents(min, max),
+        tickProviderSpec:
+            charts.StaticNumericTickProviderSpec(<charts.TickSpec<num>>[
+          charts.TickSpec<num>(min),
+          charts.TickSpec<num>(max),
+        ]),
       ),
       domainAxis: charts.DateTimeAxisSpec(
-        viewport: charts.DateTimeExtents(
-          start: _data[0].data.first.time,
-          end: _data[0].data.last.time,
-        ),
+        renderSpec: charts.NoneRenderSpec(),
+        showAxisLine: false,
+        // viewport: charts.DateTimeExtents(
+        //   start: _data[0].data.first.time,
+        //   end: _data[0].data.last.time,
+        // ),
+        // tickProviderSpec: charts.AutoDateTimeTickProviderSpec(),
       ),
       // Optionally pass in a [DateTimeFactory] used by the chart. The factory
       // should create the same type of [DateTime] as the data provided. If none
       // specified, the default creates local date time.
-      // dateTimeFactory: const charts.LocalDateTimeFactory(),
+      dateTimeFactory: const charts.LocalDateTimeFactory(),
     );
   }
 }
