@@ -1,8 +1,7 @@
 name: heart_bpm
 description: Easy way to record individual blood pressure using smartphone camera.
 version: 1.0.0+0
-author: Vedala Holdings, Inc
-# homepage:
+homepage: https://github.com/kvedala/heart_bpm
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
