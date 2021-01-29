@@ -2,7 +2,8 @@ library heart_bpm;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+
+import 'chart.dart';
 
 /// Class to store one sample data point
 class SensorValue {
@@ -49,7 +50,10 @@ class HeartBPMDialog extends StatefulWidget {
   /// ```
   /// $y_n = alpha * x_n + (1 - alpha) * y_{n-1}$
   /// ```
-  double alpha;
+  double alpha = 0.6;
+
+  /// Additional child widget to display
+  final Widget child;
 
   /// Obtains heart beats per minute using camera sensor
   ///
@@ -73,6 +77,7 @@ class HeartBPMDialog extends StatefulWidget {
     this.sampleDelay = 1000 ~/ 30,
     @required this.onData,
     this.alpha = 0.6,
+    this.child,
   });
 
   /// Set the smoothing factor for exponential averaging
@@ -106,6 +111,9 @@ class _HeartBPPView extends State<HeartBPMDialog> {
   /// Current value
   double currentValue = 0;
 
+  /// to ensure camara was initialized
+  bool isCameraInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -120,23 +128,25 @@ class _HeartBPPView extends State<HeartBPMDialog> {
 
   /// Deinitialize the camera controller
   void _deinitController() async {
-    _controller.stopImageStream();
+    isCameraInitialized = false;
+    if (_controller == null) return;
+    // await _controller.stopImageStream();
     await _controller.dispose();
+    // while (_processing) {}
     // _controller = null;
   }
 
   /// Initialize the camera controller
   ///
   /// Function to initialize the camera controller and start data collection.
-  ///
-  void _initController() async {
+  Future<void> _initController() async {
     if (_controller != null) return;
     try {
       // 1. get list of all available cameras
       List<CameraDescription> _cameras = await availableCameras();
       // 2. assign the preferred camera with low resolution and disable audio
       _controller = CameraController(_cameras.first, ResolutionPreset.low,
-          enableAudio: false);
+          enableAudio: false, imageFormatGroup: ImageFormatGroup.yuv420);
 
       // 3. initialize the camera
       await _controller.initialize();
@@ -146,16 +156,29 @@ class _HeartBPPView extends State<HeartBPMDialog> {
           .then((value) => _controller.setFlashMode(FlashMode.torch));
 
       // 5. register image streaming callback
-      _controller
-          .startImageStream((image) => _processing ? null : _scanImage(image));
+      _controller.startImageStream((image) {
+        if (!_processing && mounted) _scanImage(image);
+      });
+
+      setState(() {
+        isCameraInitialized = true;
+      });
     } catch (e) {
       print(e);
       throw e;
     }
   }
 
-  void _scanImage(CameraImage image) {
-    /// make system busy
+  static const int windowLength = 150;
+  static List<SensorValue> measureWindow = List<SensorValue>.filled(
+      windowLength, SensorValue(time: DateTime.now(), value: 0),
+      growable: true);
+  List<SensorValue> differenceWindow = List<SensorValue>.filled(
+      windowLength, SensorValue(time: DateTime.now(), value: 0),
+      growable: true);
+
+  void _scanImage(CameraImage image) async {
+    // make system busy
     setState(() {
       _processing = true;
     });
@@ -166,18 +189,49 @@ class _HeartBPPView extends State<HeartBPMDialog> {
             image.planes.first.bytes.length;
 
     setState(() {
+      measureWindow.removeAt(0);
+      measureWindow.add(SensorValue(time: DateTime.now(), value: _avg));
+    });
+
+    const List<int> walshKernel = [-1, 1, 1, -1];
+    const int kernelLength = 4;
+    const int kernelLength2 = kernelLength >> 1;
+
+    for (int i = 0; i < windowLength; i++) {
+      double convolutionValue = 0;
+      for (int j = 0; j <= kernelLength2; j++) {
+        if ((i - j) >= 0) {
+          // print('i - j = $i - $j = ${i - j}');
+          convolutionValue += measureWindow[i - j].value * walshKernel[j];
+        }
+        if ((j + i) < windowLength &&
+            (i + j != i - j) &&
+            (j + kernelLength2) < kernelLength) {
+          // print('i + j = $i + $j = ${i + j}');
+          convolutionValue +=
+              measureWindow[i + j].value * walshKernel[j + kernelLength2];
+        }
+      }
+      differenceWindow[i] =
+          SensorValue(time: measureWindow[i].time, value: convolutionValue);
+    }
+
+    setState(() {
       currentValue = _smoothBPM(_avg);
     });
 
+    // call the provided function with the new data sample
     widget.onData(SensorValue(
       time: DateTime.now(),
       value: currentValue,
     ));
 
-    Future.delayed(Duration(milliseconds: widget.sampleDelay)).then((onValue) {
-      setState(() {
-        _processing = false;
-      });
+    Future<void>.delayed(Duration(milliseconds: widget.sampleDelay))
+        .then((onValue) {
+      if (mounted)
+        setState(() {
+          _processing = false;
+        });
     });
   }
 
@@ -204,46 +258,25 @@ class _HeartBPPView extends State<HeartBPMDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Container(
-        height: 100,
-        child: Column(
-          children: [
-            Expanded(child: CameraPreview(_controller)),
-            Text(currentValue.toStringAsFixed(0)),
-          ],
-        ),
+        constraints: BoxConstraints.tightFor(height: 300),
+        child: isCameraInitialized
+            ? Column(
+                children: [
+                  Container(
+                    constraints:
+                        BoxConstraints.tightFor(width: 100, height: 150),
+                    child: CameraPreview(_controller),
+                  ),
+                  Text(currentValue.toStringAsFixed(0)),
+                  // widget.child == null ? SizedBox() : widget.child
+                  Container(
+                    constraints: BoxConstraints.tight(Size(250, 75)),
+                    child: BPMChart(measureWindow),
+                  ),
+                ],
+              )
+            : CircularProgressIndicator(),
       ),
-    );
-  }
-}
-
-/// Generate a simple heart BPM graph
-class BPMChart extends StatelessWidget {
-  /// Data series formatted to be plotted
-  final List<charts.Series<SensorValue, DateTime>> _data;
-
-  /// Generate the heart BPM graph from given list of [data] of type
-  /// [SensorValue]
-  BPMChart(
-    /// List of [SensorValue] data points to be plotted
-    List<SensorValue> data,
-  ) : _data = [
-          charts.Series<SensorValue, DateTime>(
-            id: "BPM",
-            colorFn: (datum, index) => charts.MaterialPalette.blue.shadeDefault,
-            domainFn: (datum, index) => datum.time,
-            measureFn: (datum, index) => datum.value,
-            data: data,
-          )
-        ];
-
-  @override
-  Widget build(BuildContext context) {
-    return new charts.TimeSeriesChart(
-      _data,
-      // Optionally pass in a [DateTimeFactory] used by the chart. The factory
-      // should create the same type of [DateTime] as the data provided. If none
-      // specified, the default creates local date time.
-      dateTimeFactory: const charts.LocalDateTimeFactory(),
     );
   }
 }
