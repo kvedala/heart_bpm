@@ -1,3 +1,5 @@
-## [0.0.1] - TODO: Add release date.
+## [1.0.0] - January 29, 2021
 
-* TODO: Describe initial release.
+* Initial release
+* Working widget with example
+* Tested on iOS and Android
