@@ -29,6 +29,7 @@ class SensorValue {
 /// Using the smartphone camera, the widget estimates the skin tone variations
 /// over time. These variations are due to the blood flow in the arteries
 /// present below the skin of the fingertips.
+// ignore: must_be_immutable
 class HeartBPMDialog extends StatefulWidget {
   /// Callback used to notify the caller of updated BPM measurement
   ///
@@ -213,9 +214,6 @@ class _HeartBPPView extends State<HeartBPMDialog> {
       });
     });
   }
-
-  /// variable to store previous sample value
-  double _pastBPM = 0;
 
   /// Smooth the raw measurements using Exponential averaging
   /// the scaling factor [alpha] is used to compute exponential moving average of the
