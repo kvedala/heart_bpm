@@ -3,15 +3,13 @@ library heart_bpm;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-import 'chart.dart';
-
 /// Class to store one sample data point
 class SensorValue {
   /// timestamp of datapoint
   final DateTime time;
 
   /// value of datapoint
-  final double value;
+  final num value;
 
   SensorValue({@required this.time, @required this.value});
 
