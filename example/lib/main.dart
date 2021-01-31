@@ -27,6 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<SensorValue> data = [];
+  List<SensorValue> bpmValues = [];
   //  Widget chart = BPMChart(data);
 
   bool isBPMEnabled = false;
@@ -50,7 +51,11 @@ class _HomePageState extends State<HomePage> {
                     });
                     // chart = BPMChart(data);
                   },
-                  onBPM: (value) {},
+                  onBPM: (value) => setState(() {
+                    if (data.length == 100) data.removeAt(0);
+                    bpmValues.add(SensorValue(
+                        value: value.toDouble(), time: DateTime.now()));
+                  }),
                   // sampleDelay: 1000 ~/ 20,
                   // child: Container(
                   //   height: 50,
@@ -62,8 +67,16 @@ class _HomePageState extends State<HomePage> {
           isBPMEnabled
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
-                  height: 150,
-                  child: BPMChart(data),
+                  height: 170,
+                  child: Column(children: [Text("Raw values"), BPMChart(data)]),
+                )
+              : SizedBox(),
+          isBPMEnabled
+              ? Container(
+                  decoration: BoxDecoration(border: Border.all()),
+                  height: 170,
+                  child: Column(
+                      children: [Text("BPM Values"), BPMChart(bpmValues)]),
                 )
               : SizedBox(),
           Center(
