@@ -46,13 +46,13 @@ class _HomePageState extends State<HomePage> {
                   context: context,
                   onRawData: (value) {
                     setState(() {
-                      if (data.length == 100) data.removeAt(0);
+                      if (data.length >= 100) data.removeAt(0);
                       data.add(value);
                     });
                     // chart = BPMChart(data);
                   },
                   onBPM: (value) => setState(() {
-                    if (data.length == 100) data.removeAt(0);
+                    if (bpmValues.length >= 100) bpmValues.removeAt(0);
                     bpmValues.add(SensorValue(
                         value: value.toDouble(), time: DateTime.now()));
                   }),
@@ -67,16 +67,15 @@ class _HomePageState extends State<HomePage> {
           isBPMEnabled
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
-                  height: 170,
-                  child: Column(children: [Text("Raw values"), BPMChart(data)]),
+                  height: 180,
+                  child: BPMChart(data),
                 )
               : SizedBox(),
           isBPMEnabled
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
-                  height: 170,
-                  child: Column(
-                      children: [Text("BPM Values"), BPMChart(bpmValues)]),
+                  constraints: BoxConstraints.expand(height: 180),
+                  child: BPMChart(bpmValues),
                 )
               : SizedBox(),
           Center(
