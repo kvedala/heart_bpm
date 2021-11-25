@@ -17,7 +17,7 @@ class BPMChart extends StatelessWidget {
     List<SensorValue> data, {
 
     /// List of second series of [SensorValue] data points to be plotted
-    List<SensorValue> data2,
+    List<SensorValue>? data2,
   }) : _data = data2 == null
             ? [_updateChartData(data)]
             : [_updateChartData(data), _updateChartData(data2, 2)];

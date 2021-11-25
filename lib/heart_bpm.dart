@@ -11,7 +11,7 @@ class SensorValue {
   /// value of datapoint
   final num value;
 
-  SensorValue({@required this.time, @required this.value});
+  SensorValue({required this.time, required this.value});
 
   /// Returns JSON mapped data point
   Map<String, dynamic> toJSON() => {'time': time, 'value': value};
@@ -39,7 +39,7 @@ class HeartBPMDialog extends StatefulWidget {
   /// Callback used to notify the caller of updated raw data sample
   ///
   /// Should be non-blocking as it can affect
-  final void Function(SensorValue) onRawData;
+  final void Function(SensorValue)? onRawData;
 
   /// Camera sampling rate in milliseconds
   final int sampleDelay;
@@ -57,7 +57,7 @@ class HeartBPMDialog extends StatefulWidget {
   double alpha = 0.6;
 
   /// Additional child widget to display
-  final Widget child;
+  final Widget? child;
 
   /// Obtains heart beats per minute using camera sensor
   ///
@@ -76,10 +76,10 @@ class HeartBPMDialog extends StatefulWidget {
   /// );
   /// ```
   HeartBPMDialog({
-    Key key,
-    @required this.context,
+    Key? key,
+    required this.context,
     this.sampleDelay = 2000 ~/ 30,
-    @required this.onBPM,
+    required this.onBPM,
     this.onRawData,
     this.alpha = 0.8,
     this.child,
@@ -108,7 +108,7 @@ class HeartBPMDialog extends StatefulWidget {
 
 class _HeartBPPView extends State<HeartBPMDialog> {
   /// Camera controller
-  CameraController _controller;
+  CameraController? _controller;
 
   /// Used to set sampling rate
   bool _processing = false;
@@ -136,7 +136,7 @@ class _HeartBPPView extends State<HeartBPMDialog> {
     isCameraInitialized = false;
     if (_controller == null) return;
     // await _controller.stopImageStream();
-    await _controller.dispose();
+    await _controller!.dispose();
     // while (_processing) {}
     // _controller = null;
   }
@@ -154,14 +154,14 @@ class _HeartBPPView extends State<HeartBPMDialog> {
           enableAudio: false, imageFormatGroup: ImageFormatGroup.yuv420);
 
       // 3. initialize the camera
-      await _controller.initialize();
+      await _controller!.initialize();
 
       // 4. set torch to ON and start image stream
       Future.delayed(Duration(milliseconds: 500))
-          .then((value) => _controller.setFlashMode(FlashMode.torch));
+          .then((value) => _controller!.setFlashMode(FlashMode.torch));
 
       // 5. register image streaming callback
-      _controller.startImageStream((image) {
+      _controller!.startImageStream((image) {
         if (!_processing && mounted) {
           _processing = true;
           _scanImage(image);
@@ -197,7 +197,7 @@ class _HeartBPPView extends State<HeartBPMDialog> {
     measureWindow.add(SensorValue(time: DateTime.now(), value: _avg));
 
     _smoothBPM(_avg).then((value) {
-      widget.onRawData(
+      widget.onRawData!(
         // call the provided function with the new data sample
         SensorValue(
           time: DateTime.now(),
@@ -226,7 +226,7 @@ class _HeartBPPView extends State<HeartBPMDialog> {
 
     measureWindow.forEach((element) {
       _avg += element.value / measureWindow.length;
-      if (element.value > maxVal) maxVal = element.value;
+      if (element.value > maxVal) maxVal = element.value as double;
     });
 
     double _threshold = (maxVal + _avg) / 2;
@@ -269,10 +269,10 @@ class _HeartBPPView extends State<HeartBPMDialog> {
               children: [
                 Container(
                   constraints: BoxConstraints.tightFor(width: 100, height: 130),
-                  child: _controller.buildPreview(),
+                  child: _controller!.buildPreview(),
                 ),
                 Text(currentValue.toStringAsFixed(0)),
-                widget.child == null ? SizedBox() : widget.child,
+                widget.child == null ? SizedBox() : widget.child!,
               ],
             )
           : Center(child: CircularProgressIndicator()),
