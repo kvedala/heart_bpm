@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   //  Widget chart = BPMChart(data);
 
   bool isBPMEnabled = false;
-  Widget dialog;
+  Widget? dialog;
 
   @override
   Widget build(BuildContext context) {
@@ -64,14 +64,14 @@ class _HomePageState extends State<HomePage> {
                   // ),
                 )
               : SizedBox(),
-          isBPMEnabled
+    isBPMEnabled && data.isNotEmpty
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
                   height: 180,
                   child: BPMChart(data),
                 )
               : SizedBox(),
-          isBPMEnabled
+          isBPMEnabled && bpmValues.isNotEmpty
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
                   constraints: BoxConstraints.expand(height: 180),
