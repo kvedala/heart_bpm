@@ -1,9 +1,9 @@
-library heart_bpm;
-
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 
 import 'heart_bpm.dart';
+
+export 'package:heart_bpm/heart_bpm.dart' show BPMChart;
 
 /// Generate a simple heart BPM graph
 class BPMChart extends StatelessWidget {
