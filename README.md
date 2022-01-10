@@ -50,7 +50,7 @@ Add two rows to the file `ios/Runner/Info.plist`:
 
 Or in text format add the key:
 
-```plist
+```xml
 <key>NSCameraUsageDescription</key>
 <string>Heart BPM plugin would like to use camera to measure your heart rate.</string>
 <key>NSMicrophoneUsageDescription</key>
