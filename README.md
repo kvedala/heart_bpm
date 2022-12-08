@@ -83,11 +83,11 @@ The module can be used simply by accessing it as a widget.
     Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text('Heart BPM Demo'),
+            title: const Text('Heart BPM Demo'),
         ),
         body: Column(
         children: [
-            isBPMEnabled ? HeartBPMDialog(
+            isBPMEnabled ? BPMDialog(
                     context: context,
                     onRawData: (value) {
                         setState(() {
@@ -105,7 +105,7 @@ The module can be used simply by accessing it as a widget.
               : SizedBox(),
           Center(
             child: ElevatedButton.icon(
-                icon: Icon(Icons.favorite_rounded),
+                icon: const Icon(Icons.favorite_rounded),
                 label: Text(isBPMEnabled
                     ? "Stop measurement" : "Measure BPM"),
                 onPressed: () => setState(() =>
