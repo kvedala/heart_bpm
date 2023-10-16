@@ -38,7 +38,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('Heart BPM Demo'),
       ),
       body: Column(
@@ -46,6 +48,8 @@ class _HomePageState extends State<HomePage> {
           isBPMEnabled
               ? dialog = HeartBPMDialog(
                   context: context,
+                  showTextValues: true,
+                  borderRadius: 30,
                   onRawData: (value) {
                     setState(() {
                       if (data.length >= 100) data.removeAt(0);

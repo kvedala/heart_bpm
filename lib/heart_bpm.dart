@@ -36,6 +36,7 @@ class HeartBPMDialog extends StatefulWidget {
   final double? cameraWidgetHeight;
   final double? cameraWidgetWidth;
   bool? showTextValues = false;
+  final double? borderRadius;
 
   /// Callback used to notify the caller of updated BPM measurement
   ///
@@ -93,6 +94,7 @@ class HeartBPMDialog extends StatefulWidget {
     this.cameraWidgetHeight,
     this.cameraWidgetWidth,
     this.showTextValues,
+    this.borderRadius,
   });
 
   /// Set the smoothing factor for exponential averaging
@@ -282,7 +284,11 @@ class _HeartBPPView extends State<HeartBPMDialog> {
                     width: widget.cameraWidgetWidth ?? 100,
                     height: widget.cameraWidgetHeight ?? 130,
                   ),
-                  child: _controller!.buildPreview(),
+                  child: ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(widget.borderRadius ?? 10),
+                    child: _controller!.buildPreview(),
+                  ),
                 ),
                 //A developer has to choose whether they want to show this Text widget. (Implemented by Karl Mathuthu)
                 if (widget.showTextValues == true) ...{
