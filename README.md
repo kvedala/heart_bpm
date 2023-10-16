@@ -120,8 +120,8 @@ The module can be used simply by accessing it as a widget.
 
     ## Developers
 
-    Developed with ❤️ by Krishna Vedala @kvedala
+    Developed with ❤️ by Krishna Vedala
 
     ## Contributors
 
-    Karl Mathuthu @Karlmathuthu
+    Karl Mathuthu
