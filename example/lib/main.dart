@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
               ? dialog = HeartBPMDialog(
                   context: context,
                   showTextValues: true,
-                  borderRadius: 30,
+                  borderRadius: 10,
                   onRawData: (value) {
                     setState(() {
                       if (data.length >= 100) data.removeAt(0);
