@@ -31,6 +31,9 @@ class SensorValue {
 /// present below the skin of the fingertips.
 // ignore: must_be_immutable
 class HeartBPMDialog extends StatefulWidget {
+  /// This is the Loading widget, A developer has to customize it.
+  final Widget? loading;
+
   /// Callback used to notify the caller of updated BPM measurement
   ///
   /// Should be non-blocking as it can affect
@@ -83,6 +86,7 @@ class HeartBPMDialog extends StatefulWidget {
     this.onRawData,
     this.alpha = 0.8,
     this.child,
+    this.loading,
   });
 
   /// Set the smoothing factor for exponential averaging
