@@ -33,6 +33,9 @@ class SensorValue {
 class HeartBPMDialog extends StatefulWidget {
   /// This is the Loading widget, A developer has to customize it.
   final Widget? centerLoadingWidget;
+  final double? cameraWidgetHeight;
+  final double? cameraWidgetWidth;
+  bool? showTextValues = false;
 
   /// Callback used to notify the caller of updated BPM measurement
   ///
@@ -87,6 +90,9 @@ class HeartBPMDialog extends StatefulWidget {
     this.alpha = 0.8,
     this.child,
     this.centerLoadingWidget,
+    this.cameraWidgetHeight,
+    this.cameraWidgetWidth,
+    this.showTextValues,
   });
 
   /// Set the smoothing factor for exponential averaging
@@ -272,10 +278,17 @@ class _HeartBPPView extends State<HeartBPMDialog> {
           ? Column(
               children: [
                 Container(
-                  constraints: BoxConstraints.tightFor(width: 100, height: 130),
+                  constraints: BoxConstraints.tightFor(
+                    width: widget.cameraWidgetWidth ?? 100,
+                    height: widget.cameraWidgetHeight ?? 130,
+                  ),
                   child: _controller!.buildPreview(),
                 ),
-                Text(currentValue.toStringAsFixed(0)),
+                //A developer has to choose whether they want to show this Text widget. (Implemented by Karl Mathuthu)
+                if (widget.showTextValues == true) ...{
+                  Text(currentValue.toStringAsFixed(0)),
+                } else
+                  SizedBox(),
                 widget.child == null ? SizedBox() : widget.child!,
               ],
             )
