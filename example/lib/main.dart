@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Heart BPM Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true,
       ),
       home: HomePage(),
     );
@@ -64,7 +65,7 @@ class _HomePageState extends State<HomePage> {
                   // ),
                 )
               : SizedBox(),
-    isBPMEnabled && data.isNotEmpty
+          isBPMEnabled && data.isNotEmpty
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
                   height: 180,
