@@ -268,22 +268,23 @@ class _HeartBPPView extends State<HeartBPMDialog> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        child: isCameraInitialized
-            ? Column(
-                children: [
-                  Container(
-                    constraints:
-                        BoxConstraints.tightFor(width: 100, height: 130),
-                    child: _controller!.buildPreview(),
-                  ),
-                  Text(currentValue.toStringAsFixed(0)),
-                  widget.child == null ? SizedBox() : widget.child!,
-                ],
-              )
-            : Center(
-                child: widget.loading != null
-                    ? widget.loading
-                    : CircularProgressIndicator(),
-              ));
+      child: isCameraInitialized
+          ? Column(
+              children: [
+                Container(
+                  constraints: BoxConstraints.tightFor(width: 100, height: 130),
+                  child: _controller!.buildPreview(),
+                ),
+                Text(currentValue.toStringAsFixed(0)),
+                widget.child == null ? SizedBox() : widget.child!,
+              ],
+            )
+          : Center(
+            /// A developer has to customize the loading widget.(Implemented by Karl Mathuthu)
+              child: widget.loading != null
+                  ? widget.loading
+                  : CircularProgressIndicator(),
+            ),
+    );
   }
 }
