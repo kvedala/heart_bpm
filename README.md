@@ -117,3 +117,11 @@ The module can be used simply by accessing it as a widget.
       ),
     );
     ```
+
+    ## Developers
+
+    Developed with ❤️ by Krishna Vedala @kvedala
+
+    ## Contributors
+
+    Karl Mathuthu @Karlmathuthu

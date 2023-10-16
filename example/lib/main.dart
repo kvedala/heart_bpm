@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heart_bpm/chart.dart';
 import 'package:heart_bpm/heart_bpm.dart';
 
 void main() {
