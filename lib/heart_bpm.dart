@@ -32,7 +32,7 @@ class SensorValue {
 // ignore: must_be_immutable
 class HeartBPMDialog extends StatefulWidget {
   /// This is the Loading widget, A developer has to customize it.
-  final Widget? loading;
+  final Widget? centerLoadingWidget;
 
   /// Callback used to notify the caller of updated BPM measurement
   ///
@@ -86,7 +86,7 @@ class HeartBPMDialog extends StatefulWidget {
     this.onRawData,
     this.alpha = 0.8,
     this.child,
-    this.loading,
+    this.centerLoadingWidget,
   });
 
   /// Set the smoothing factor for exponential averaging
@@ -280,9 +280,9 @@ class _HeartBPPView extends State<HeartBPMDialog> {
               ],
             )
           : Center(
-            /// A developer has to customize the loading widget.(Implemented by Karl Mathuthu)
-              child: widget.loading != null
-                  ? widget.loading
+              /// A developer has to customize the loading widget (Implemented by Karl Mathuthu)
+              child: widget.centerLoadingWidget != null
+                  ? widget.centerLoadingWidget
                   : CircularProgressIndicator(),
             ),
     );
