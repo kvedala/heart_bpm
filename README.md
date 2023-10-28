@@ -117,3 +117,10 @@ The module can be used simply by accessing it as a widget.
       ),
     );
     ```
+
+## Contributors
+
+| Contributor       | Profile Picture                                                                                              |
+|-------------------|--------------------------------------------------------------------------------------------------------------|
+| Karl Mathuthu     | [![Karl Mathuthu](https://avatars.githubusercontent.com/Karlmathuthu?s=100)](https://github.com/Karlmathuthu) |
+| Krishna Vedala    | [![Krishna Vedala](https://avatars.githubusercontent.com/kvedala?s=100)](https://github.com/kvedala)      |

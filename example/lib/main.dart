@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heart_bpm/chart.dart';
 import 'package:heart_bpm/heart_bpm.dart';
 
 void main() {
@@ -11,8 +12,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Heart BPM Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true,
       ),
       home: HomePage(),
     );
@@ -35,7 +38,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('Heart BPM Demo'),
       ),
       body: Column(
@@ -43,6 +48,8 @@ class _HomePageState extends State<HomePage> {
           isBPMEnabled
               ? dialog = HeartBPMDialog(
                   context: context,
+                  showTextValues: true,
+                  borderRadius: 10,
                   onRawData: (value) {
                     setState(() {
                       if (data.length >= 100) data.removeAt(0);
@@ -63,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                   // ),
                 )
               : SizedBox(),
-    isBPMEnabled && data.isNotEmpty
+          isBPMEnabled && data.isNotEmpty
               ? Container(
                   decoration: BoxDecoration(border: Border.all()),
                   height: 180,

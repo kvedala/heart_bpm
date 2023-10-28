@@ -31,6 +31,13 @@ class SensorValue {
 /// present below the skin of the fingertips.
 // ignore: must_be_immutable
 class HeartBPMDialog extends StatefulWidget {
+  /// This is the Loading widget, A developer has to customize it.
+  final Widget? centerLoadingWidget;
+  final double? cameraWidgetHeight;
+  final double? cameraWidgetWidth;
+  bool? showTextValues = false;
+  final double? borderRadius;
+
   /// Callback used to notify the caller of updated BPM measurement
   ///
   /// Should be non-blocking as it can affect
@@ -83,6 +90,11 @@ class HeartBPMDialog extends StatefulWidget {
     this.onRawData,
     this.alpha = 0.8,
     this.child,
+    this.centerLoadingWidget,
+    this.cameraWidgetHeight,
+    this.cameraWidgetWidth,
+    this.showTextValues,
+    this.borderRadius,
   });
 
   /// Set the smoothing factor for exponential averaging
@@ -268,14 +280,30 @@ class _HeartBPPView extends State<HeartBPMDialog> {
           ? Column(
               children: [
                 Container(
-                  constraints: BoxConstraints.tightFor(width: 100, height: 130),
-                  child: _controller!.buildPreview(),
+                  constraints: BoxConstraints.tightFor(
+                    width: widget.cameraWidgetWidth ?? 100,
+                    height: widget.cameraWidgetHeight ?? 130,
+                  ),
+                  child: ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(widget.borderRadius ?? 10),
+                    child: _controller!.buildPreview(),
+                  ),
                 ),
-                Text(currentValue.toStringAsFixed(0)),
+                //A developer has to choose whether they want to show this Text widget. (Implemented by Karl Mathuthu)
+                if (widget.showTextValues == true) ...{
+                  Text(currentValue.toStringAsFixed(0)),
+                } else
+                  SizedBox(),
                 widget.child == null ? SizedBox() : widget.child!,
               ],
             )
-          : Center(child: CircularProgressIndicator()),
+          : Center(
+              /// A developer has to customize the loading widget (Implemented by Karl Mathuthu)
+              child: widget.centerLoadingWidget != null
+                  ? widget.centerLoadingWidget
+                  : CircularProgressIndicator(),
+            ),
     );
   }
 }
