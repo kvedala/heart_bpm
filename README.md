@@ -118,6 +118,27 @@ The module can be used simply by accessing it as a widget.
     );
     ```
 
+## Plotting measurements
+
+`BPMChart` is available from a separate library. Import it alongside the
+measurement API, collect `SensorValue` samples with `onRawData`, and give the
+chart a bounded height:
+
+```dart
+import 'package:heart_bpm/chart.dart';
+import 'package:heart_bpm/heart_bpm.dart';
+
+final List<SensorValue> data = [];
+
+// In your widget tree:
+SizedBox(
+  height: 180,
+  child: BPMChart(data),
+)
+```
+
+An optional `data2` list can be supplied to display a second series.
+
 ## Contributors
 
 | Contributor       | Profile Picture                                                                                              |

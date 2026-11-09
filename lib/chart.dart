@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
+import 'package:fl_chart/fl_chart.dart';
 
 import 'heart_bpm.dart';
 
-export 'package:heart_bpm/heart_bpm.dart' show BPMChart;
-
 /// Generate a simple heart BPM graph
 class BPMChart extends StatelessWidget {
-  /// Data series formatted to be plotted
-  final List<charts.Series<SensorValue, DateTime>> _data;
+  /// Data series formatted for plotting.
+  ///
+  /// The first series is blue and the optional second series is green.
+  final List<List<SensorValue>> _data;
 
   /// Generate the heart BPM graph from given list of [data] of type
   /// [SensorValue]
@@ -18,64 +18,64 @@ class BPMChart extends StatelessWidget {
 
     /// List of second series of [SensorValue] data points to be plotted
     List<SensorValue>? data2,
-  }) : _data = data2 == null
-            ? [_updateChartData(data)]
-            : [_updateChartData(data), _updateChartData(data2, 2)];
-
-  /// Function to convert as list of [SensorValue] to [Series] ready for
-  /// plotting
-  static charts.Series<SensorValue, DateTime> _updateChartData(
-      List<SensorValue> data,
-      [int seriesNumber = 1]) {
-    return charts.Series<SensorValue, DateTime>(
-      id: "BPM",
-      colorFn: (datum, index) => seriesNumber == 1
-          ? charts.MaterialPalette.blue.shadeDefault
-          : charts.MaterialPalette.green.shadeDefault,
-      domainFn: (datum, index) => datum.time,
-      measureFn: (datum, index) => datum.value,
-      data: data,
-    );
-  }
+  }) : _data = [data, if (data2 != null) data2];
 
   @override
   Widget build(BuildContext context) {
-    num min = _data[0]
-            .data
-            .reduce((value, element) =>
-                (value.value < element.value) ? value : element)
-            .value,
-        max = _data[0]
-            .data
-            .reduce((value, element) =>
-                (value.value > element.value) ? value : element)
-            .value;
+    final series = _data.where((data) => data.isNotEmpty).toList();
+    if (series.isEmpty) return const SizedBox.shrink();
 
-    return charts.TimeSeriesChart(
-      _data,
-      primaryMeasureAxis: charts.NumericAxisSpec(
-        showAxisLine: false,
-        renderSpec: charts.NoneRenderSpec(),
-        viewport: charts.NumericExtents(min, max),
-        tickProviderSpec:
-            charts.StaticNumericTickProviderSpec(<charts.TickSpec<num>>[
-          charts.TickSpec<num>(min),
-          charts.TickSpec<num>(max),
-        ]),
+    final values = series.expand((data) => data).toList();
+    // fl_chart uses numeric x coordinates; elapsed time avoids large epoch values.
+    final startTime = values
+        .map((value) => value.time)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final spots = series.map((data) {
+      return data
+          .map(
+            (value) => FlSpot(
+              value.time.difference(startTime).inMicroseconds.toDouble(),
+              value.value.toDouble(),
+            ),
+          )
+          .toList();
+    }).toList();
+    final minY = values
+        .map((value) => value.value.toDouble())
+        .reduce((a, b) => a < b ? a : b);
+    final maxY = values
+        .map((value) => value.value.toDouble())
+        .reduce((a, b) => a > b ? a : b);
+    final minX = spots
+        .expand((data) => data)
+        .map((spot) => spot.x)
+        .reduce((a, b) => a < b ? a : b);
+    final maxX = spots
+        .expand((data) => data)
+        .map((spot) => spot.x)
+        .reduce((a, b) => a > b ? a : b);
+
+    // Expand degenerate ranges so single-point and constant series remain visible.
+    return LineChart(
+      LineChartData(
+        minX: minX == maxX ? minX - 1 : minX,
+        maxX: minX == maxX ? maxX + 1 : maxX,
+        minY: minY == maxY ? minY - 1 : minY,
+        maxY: minY == maxY ? maxY + 1 : maxY,
+        lineBarsData: [
+          for (var i = 0; i < spots.length; i++)
+            LineChartBarData(
+              spots: spots[i],
+              color: i == 0 ? Colors.blue : Colors.green,
+              dotData: FlDotData(show: spots[i].length == 1),
+            ),
+        ],
+        // Keep the chart compact by hiding axes, grid lines, and touch overlays.
+        gridData: const FlGridData(show: false),
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
       ),
-      domainAxis: charts.DateTimeAxisSpec(
-        renderSpec: charts.NoneRenderSpec(),
-        showAxisLine: false,
-        // viewport: charts.DateTimeExtents(
-        //   start: _data[0].data.first.time,
-        //   end: _data[0].data.last.time,
-        // ),
-        // tickProviderSpec: charts.AutoDateTimeTickProviderSpec(),
-      ),
-      // Optionally pass in a [DateTimeFactory] used by the chart. The factory
-      // should create the same type of [DateTime] as the data provided. If none
-      // specified, the default creates local date time.
-      dateTimeFactory: const charts.LocalDateTimeFactory(),
     );
   }
 }
