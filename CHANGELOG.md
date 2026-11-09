@@ -1,3 +1,8 @@
+## [3.0.0+0] - November 9, 2026
+
+* Replace `community_charts_flutter` with `fl_chart`.
+* Require Dart 3.12 or later.
+
 ## [1.1.0+0] - December 18, 2021
 
 * Migrate to null safety
